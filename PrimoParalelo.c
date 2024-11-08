@@ -6,6 +6,7 @@
 #define TAREA 1
 #define RESULTADO 2
 #define FIN 3
+#define ULTIMA 4
 
 int esPrimo(int num) {
 	if (num <= 1) return 0;
@@ -15,31 +16,26 @@ int esPrimo(int num) {
 	return 1;
 }
 
-void inicializar(int **matriz, int filas, int columnas) {
+void inicializar(int *matriz, int filas, int columnas) {
 	srand(time(NULL));
-	for (int i = 0; i < filas; i++) {
-		for (int j = 0; j < columnas; j++) {
-			matriz[i][j] = rand() % 101;  // Valores aleatorios entre 0 y 100
-		}
+	for (int i = 0; i < (filas*columnas); i++) {
+		matriz[i] = rand() % 101;  // Valores aleatorios entre 0 y 100
 	}
 }
 
-void mostrar_matriz(int **matriz, int filas, int columnas) {
-	printf("\n");
+void mostrar_matriz(int *matriz, int filas, int columnas) {
 	for (int i = 0; i < filas; i++) {
 		for (int j = 0; j < columnas; j++) {
-			printf("%d ", matriz[i][j]);
+			printf("%d ", matriz[i*columnas + j]);
 		}
 		printf("\n");
 	}
-	printf("\n");
 }
 
 void mostrar_fila(int *vector, int n) {
 	for (int i = 0; i < n; i++) {
 		printf("%d ", vector[i]);
 	}
-	printf("\n");
 }
 
 int main(int argc, char **argv) {
@@ -55,27 +51,28 @@ int main(int argc, char **argv) {
 
 	int filas = 5000;
 	int columnas = 5000;
+	int cantFilas = 1000;
 
 	if (rank == 0) {
 		// Master
 		printf("[+] Master: cantidad de Workers %d\n", size - 1);
+		printf("[+] Master: matriz de %d x %d a %d fila/worker\n", filas, columnas, cantFilas);
 		double inicio, fin;
 		int primos_totales = 0;
 		int worker = 1;
+		int resto = filas % cantFilas;
 		MPI_Status status;
-		int **matriz = (int **)malloc(filas * sizeof(int *));
-		for (int i = 0; i < filas; i++) {
-			matriz[i] = (int *)malloc(columnas * sizeof(int));
-		}
+		int *matriz = (int *)malloc(filas * columnas * sizeof(int));
+		// Inicializar matriz
 		inicializar(matriz, filas, columnas);
 		//mostrar_matriz(matriz, filas, columnas);
 		inicio = MPI_Wtime();
 
 		// Enviar filas a los Workers
-		for (int i = 0; i < filas; i++) {
+		for (int i = 0; i < (filas*columnas); i+=(cantFilas*columnas)) {
 			if (worker < size) {
-				// Enviar fila a un worker
-				MPI_Send(&matriz[i][0], columnas, MPI_INT, worker, TAREA, MPI_COMM_WORLD);
+				// Enviar las primeras filas a un worker
+				MPI_Send(&matriz[i] , columnas*cantFilas, MPI_INT, worker, TAREA, MPI_COMM_WORLD);
 				worker++;
 			} else {
 				// Recibir resultado de un worker y asignar una nueva fila
@@ -83,8 +80,16 @@ int main(int argc, char **argv) {
 				MPI_Recv(&primos, 1, MPI_INT, MPI_ANY_SOURCE, RESULTADO, MPI_COMM_WORLD, &status);
 				primos_totales += primos;
 
+				// Verificar si es la ultima fila
+				if (resto != 0 && i == (filas - resto) * columnas) {
+					// Enviar la ultima fila a un worker
+					MPI_Send(&matriz[i], columnas * resto, MPI_INT, status.MPI_SOURCE, ULTIMA, MPI_COMM_WORLD);
+					// Enviar el tamaño de la ultima fila (resto)
+					MPI_Send(&resto, 1, MPI_INT, status.MPI_SOURCE, ULTIMA, MPI_COMM_WORLD);
+					break;
+				}
 				// Reenviar una fila al worker que terminó
-				MPI_Send(&matriz[i][0], columnas, MPI_INT, status.MPI_SOURCE, TAREA, MPI_COMM_WORLD);
+				MPI_Send(&matriz[i], columnas*cantFilas, MPI_INT, status.MPI_SOURCE, TAREA, MPI_COMM_WORLD);
 			}
 		}
 
@@ -103,25 +108,36 @@ int main(int argc, char **argv) {
 		printf("[>] Tiempo: %f segundos\n", fin - inicio);
 
 		// Liberar la matriz
-		for (int i = 0; i < filas; i++) {
-			free(matriz[i]);
-		}
 		free(matriz);
 		printf("[*] Master terminado\n\n");
 
 	} else {
 		// Workers
 		MPI_Status status;
-		int *fila = (int *)malloc(columnas * sizeof(int));
+		int *fila = (int *)malloc(columnas * cantFilas * sizeof(int));
 		int primos_locales;
 		while (1) {
-			MPI_Recv(fila, columnas, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+			MPI_Recv(fila, columnas * cantFilas, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
 			if (status.MPI_TAG == TAREA) {
 				primos_locales = 0;
-				for (int i = 0; i < columnas; i++) {
+				for (int i = 0; i < columnas * cantFilas; i++) {
 					primos_locales += esPrimo(fila[i]);
 				}
-				//printf("[>] Worker %d: %d primos en esta fila\n", rank, primos_locales);
+				//printf("[>] Worker %d: %d primos en esta fila: ", rank, primos_locales);
+				//mostrar_fila(fila, columnas * cantFilas);
+				//printf("\n");
+				MPI_Send(&primos_locales, 1, MPI_INT, 0, RESULTADO, MPI_COMM_WORLD);
+
+			} else if (status.MPI_TAG == ULTIMA) {
+				int resto;
+				MPI_Recv(&resto, 1, MPI_INT, 0, ULTIMA, MPI_COMM_WORLD, &status);
+				primos_locales = 0;
+				for (int i = 0; i < columnas * resto; i++) {
+					primos_locales += esPrimo(fila[i]);
+				}
+				//printf("[>] Worker %d: %d primos en esta fila: ", rank, primos_locales);
+				//mostrar_fila(fila, columnas * resto);
+				//printf("\n");
 				MPI_Send(&primos_locales, 1, MPI_INT, 0, RESULTADO, MPI_COMM_WORLD);
 			} else if (status.MPI_TAG == FIN) {
 				printf("[*] Worker %d terminado\n", rank);
