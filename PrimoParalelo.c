@@ -49,9 +49,9 @@ int main(int argc, char **argv) {
 		MPI_Abort(MPI_COMM_WORLD, 1);
 	}
 
-	int filas = 5000;
-	int columnas = 5000;
-	int cantFilas = 1000;
+	int filas = atoi(argv[1]);
+	int columnas = atoi(argv[2]);
+	int cantFilas = atoi(argv[3]);
 
 	if (rank == 0) {
 		// Master
