@@ -59,10 +59,14 @@ int main(int argc, char **argv) {
 		printf("[+] Master: matriz de %d x %d a %d fila/worker\n", filas, columnas, cantFilas);
 		double inicio, fin;
 		int primos_totales = 0;
+		int primos_locales = 0;
 		int worker = 1;
+		int flag = 0;
 		int resto = filas % cantFilas;
 		MPI_Status status;
 		int *matriz = (int *)malloc(filas * columnas * sizeof(int));
+		int *fila = (int *)malloc(columnas * cantFilas * sizeof(int));
+
 		// Inicializar matriz
 		inicializar(matriz, filas, columnas);
 		//mostrar_matriz(matriz, filas, columnas);
@@ -75,21 +79,33 @@ int main(int argc, char **argv) {
 				MPI_Send(&matriz[i] , columnas*cantFilas, MPI_INT, worker, TAREA, MPI_COMM_WORLD);
 				worker++;
 			} else {
-				// Recibir resultado de un worker y asignar una nueva fila
-				int primos;
-				MPI_Recv(&primos, 1, MPI_INT, MPI_ANY_SOURCE, RESULTADO, MPI_COMM_WORLD, &status);
-				primos_totales += primos;
+				// Buscar primos mientras no llegue un resultados
+				MPI_Iprobe(MPI_ANY_SOURCE, RESULTADO, MPI_COMM_WORLD, &flag, &status);
+				if (!flag && (resto == 0 || i < (filas - resto) * columnas)) {
+					// No hay resultados, esperar
+					fila = &matriz[i];
+					primos_locales = 0;
+					for (int i = 0; i < columnas * cantFilas; i++) {
+						primos_locales += esPrimo(fila[i]);
+					}
+					primos_totales += primos_locales;
+				} else {
+					// Recibir resultado de un worker y asignar una nueva fila
+					int primos;
+					MPI_Recv(&primos, 1, MPI_INT, MPI_ANY_SOURCE, RESULTADO, MPI_COMM_WORLD, &status);
+					primos_totales += primos;
 
-				// Verificar si es la ultima fila
-				if (resto != 0 && i == (filas - resto) * columnas) {
-					// Enviar la ultima fila a un worker
-					MPI_Send(&matriz[i], columnas * resto, MPI_INT, status.MPI_SOURCE, ULTIMA, MPI_COMM_WORLD);
-					// Enviar el tamaño de la ultima fila (resto)
-					MPI_Send(&resto, 1, MPI_INT, status.MPI_SOURCE, ULTIMA, MPI_COMM_WORLD);
-					break;
+					// Verificar si es la ultima fila
+					if (resto != 0 && i == (filas - resto) * columnas) {
+						// Enviar la ultima fila a un worker
+						MPI_Send(&matriz[i], columnas * resto, MPI_INT, status.MPI_SOURCE, ULTIMA, MPI_COMM_WORLD);
+						// Enviar el tamaño de la ultima fila (resto)
+						MPI_Send(&resto, 1, MPI_INT, status.MPI_SOURCE, ULTIMA, MPI_COMM_WORLD);
+						break;
+					}
+					// Reenviar una fila al worker que terminó
+					MPI_Send(&matriz[i], columnas*cantFilas, MPI_INT, status.MPI_SOURCE, TAREA, MPI_COMM_WORLD);
 				}
-				// Reenviar una fila al worker que terminó
-				MPI_Send(&matriz[i], columnas*cantFilas, MPI_INT, status.MPI_SOURCE, TAREA, MPI_COMM_WORLD);
 			}
 		}
 

@@ -57,12 +57,22 @@ int main(int argc, char **argv) {
 		// Master
 		printf("[+] Master: cantidad de Workers %d\n", size - 1);
 		printf("[+] Master: matriz de %d x %d a %d fila/worker\n", filas, columnas, cantFilas);
-		double inicio, fin;
+		double inicio, fin, acumulado = 0;
+		double *inicioW = (double *)malloc((size) * sizeof(double));
+		double *finW = (double *)malloc((size) * sizeof(double));
 		int primos_totales = 0;
+		int primos_locales = 0;
 		int worker = 1;
+		int workerFIN = 0;
+		int flag = 0;
 		int resto = filas % cantFilas;
 		MPI_Status status;
 		int *matriz = (int *)malloc(filas * columnas * sizeof(int));
+		int *fila = (int *)malloc(columnas * cantFilas * sizeof(int));
+		for (int i = 0; i < size; i++) {
+			inicioW[i] = 0;
+			finW[i] = 0;
+		}
 		// Inicializar matriz
 		inicializar(matriz, filas, columnas);
 		//mostrar_matriz(matriz, filas, columnas);
@@ -71,50 +81,80 @@ int main(int argc, char **argv) {
 		// Enviar filas a los Workers
 		for (int i = 0; i < (filas*columnas); i+=(cantFilas*columnas)) {
 			if (worker < size) {
+				if (resto != 0 && i == (filas - resto) * columnas) {
+					// Enviar la ultima fila a un worker
+					MPI_Send(&matriz[i], columnas * resto, MPI_INT, worker, ULTIMA, MPI_COMM_WORLD);
+					// Enviar el tamaño de la ultima fila (resto)
+					MPI_Send(&resto, 1, MPI_INT, worker, ULTIMA, MPI_COMM_WORLD);
+					break;
+				}
 				// Enviar las primeras filas a un worker
+				inicioW[worker] = MPI_Wtime();
 				MPI_Send(&matriz[i] , columnas*cantFilas, MPI_INT, worker, TAREA, MPI_COMM_WORLD);
 				worker++;
 			} else {
-				// Recibir resultado de un worker y asignar una nueva fila
-				int primos;
-				MPI_Recv(&primos, 1, MPI_INT, MPI_ANY_SOURCE, RESULTADO, MPI_COMM_WORLD, &status);
-				primos_totales += primos;
+				// Buscar primos mientras no llegue un resultados
+				MPI_Iprobe(MPI_ANY_SOURCE, RESULTADO, MPI_COMM_WORLD, &flag, &status);
+				if (!flag && (resto == 0 || i < (filas - resto) * columnas)) {
+					// No hay resultados, trabajar en el master
+					inicioW[0] = MPI_Wtime();
+					fila = &matriz[i];
+					primos_locales = 0;
+					for (int i = 0; i < columnas * cantFilas; i++) {
+						primos_locales += esPrimo(fila[i]);
+					}
+					primos_totales += primos_locales;
+					finW[0] = MPI_Wtime();
+					acumulado += finW[0] - inicioW[0];
+				} else {
+					// Recibir resultado de un worker y asignar una nueva fila
+					int primos;
+					MPI_Recv(&primos, 1, MPI_INT, MPI_ANY_SOURCE, RESULTADO, MPI_COMM_WORLD, &status);
+					primos_totales += primos;
 
-				// Verificar si es la ultima fila
-				if (resto != 0 && i == (filas - resto) * columnas) {
-					// Enviar la ultima fila a un worker
-					MPI_Send(&matriz[i], columnas * resto, MPI_INT, status.MPI_SOURCE, ULTIMA, MPI_COMM_WORLD);
-					// Enviar el tamaño de la ultima fila (resto)
-					MPI_Send(&resto, 1, MPI_INT, status.MPI_SOURCE, ULTIMA, MPI_COMM_WORLD);
-					break;
+					// Verificar si es la ultima fila
+					if (resto != 0 && i == (filas - resto) * columnas) {
+						// Enviar la ultima fila a un worker
+						MPI_Send(&matriz[i], columnas * resto, MPI_INT, status.MPI_SOURCE, ULTIMA, MPI_COMM_WORLD);
+						// Enviar el tamaño de la ultima fila (resto)
+						MPI_Send(&resto, 1, MPI_INT, status.MPI_SOURCE, ULTIMA, MPI_COMM_WORLD);
+						break;
+					}
+					// Reenviar una fila al worker que terminó
+					MPI_Send(&matriz[i], columnas*cantFilas, MPI_INT, status.MPI_SOURCE, TAREA, MPI_COMM_WORLD);
 				}
-				// Reenviar una fila al worker que terminó
-				MPI_Send(&matriz[i], columnas*cantFilas, MPI_INT, status.MPI_SOURCE, TAREA, MPI_COMM_WORLD);
 			}
 		}
-
+		if (worker!=size) {
+			// Enviar FIN a los Workers restantes
+			for (int i = worker; i < size; i++) {
+				workerFIN++;
+				MPI_Send(NULL, 0, MPI_INT, i, FIN, MPI_COMM_WORLD);
+			}
+		}
 		// Recibir respuestas de los Workers restantes
-		for (int i = 1; i < size; i++) {
+		for (int i = 1; i < (size - workerFIN); i++) {
 			int primos;
 			MPI_Recv(&primos, 1, MPI_INT, MPI_ANY_SOURCE, RESULTADO, MPI_COMM_WORLD, &status);
+			finW[status.MPI_SOURCE] = MPI_Wtime();
+			printf("[>] Worker %d (%f seg Com)\n", status.MPI_SOURCE, finW[status.MPI_SOURCE] - inicioW[status.MPI_SOURCE]);
 			primos_totales += primos;
-
 			// Enviar FIN a cada worker para terminar su ejecución
 			MPI_Send(NULL, 0, MPI_INT, status.MPI_SOURCE, FIN, MPI_COMM_WORLD);
 		}
-
 		fin = MPI_Wtime();
 		printf("[>] Número total de primos: %d\n", primos_totales);
 		// Liberar la matriz
 		free(matriz);
-		printf("[*] Master terminado (%f segundos)\n", fin - inicio);
+		printf("[*] Master terminado (%f seg Pro) (%f seg Glo)\n", acumulado, fin - inicio);
 
 	} else {
 		// Workers
-		double inicio, fin, acumulado = 0;
+		double inicio, fin, inicioG, finG ,acumulado = 0;
 		MPI_Status status;
 		int *fila = (int *)malloc(columnas * cantFilas * sizeof(int));
 		int primos_locales;
+		inicioG = MPI_Wtime();
 		while (1) {
 			MPI_Recv(fila, columnas * cantFilas, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
 			if (status.MPI_TAG == TAREA) {
@@ -145,10 +185,10 @@ int main(int argc, char **argv) {
 				acumulado += fin - inicio;
 				MPI_Send(&primos_locales, 1, MPI_INT, 0, RESULTADO, MPI_COMM_WORLD);
 			} else if (status.MPI_TAG == FIN) {
-				printf("[*] Worker %d terminado (%f segundos)\n", rank, acumulado);
+				finG = MPI_Wtime();
+				printf("[*] Worker %d terminado (%f seg Pro) (%f seg Glo)\n", rank, acumulado, (finG - inicioG)-acumulado);
 				break;  // El worker termina
 			}
-			fin = MPI_Wtime();
 		}
 		free(fila);
 	}
