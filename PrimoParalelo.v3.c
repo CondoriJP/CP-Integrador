@@ -137,7 +137,7 @@ int main(int argc, char **argv) {
 			int primos;
 			MPI_Recv(&primos, 1, MPI_INT, MPI_ANY_SOURCE, RESULTADO, MPI_COMM_WORLD, &status);
 			finW[status.MPI_SOURCE] = MPI_Wtime();
-			printf("[>] Worker %d (%f seg Com)\n", status.MPI_SOURCE, finW[status.MPI_SOURCE] - inicioW[status.MPI_SOURCE]);
+			printf("[>] Worker %d (%f seg Comuni-Proces)\n", status.MPI_SOURCE, finW[status.MPI_SOURCE] - inicioW[status.MPI_SOURCE]);
 			primos_totales += primos;
 			// Enviar FIN a cada worker para terminar su ejecución
 			MPI_Send(NULL, 0, MPI_INT, status.MPI_SOURCE, FIN, MPI_COMM_WORLD);
@@ -146,7 +146,7 @@ int main(int argc, char **argv) {
 		printf("[>] Número total de primos: %d\n", primos_totales);
 		// Liberar la matriz
 		free(matriz);
-		printf("[*] Master terminado (%f seg Pro) (%f seg Glo)\n", acumulado, fin - inicio);
+		printf("[*] Master terminado (%f seg Proces) (%f seg Glob)\n", acumulado, fin - inicio);
 
 	} else {
 		// Workers
@@ -186,7 +186,7 @@ int main(int argc, char **argv) {
 				MPI_Send(&primos_locales, 1, MPI_INT, 0, RESULTADO, MPI_COMM_WORLD);
 			} else if (status.MPI_TAG == FIN) {
 				finG = MPI_Wtime();
-				printf("[*] Worker %d terminado (%f seg Pro) (%f seg Glo)\n", rank, acumulado, (finG - inicioG)-acumulado);
+				printf("[*] Worker %d terminado (%f seg Proces) (%f seg Glob)\n", rank, acumulado, (finG - inicioG)-acumulado);
 				break;  // El worker termina
 			}
 		}
