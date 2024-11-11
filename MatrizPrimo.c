@@ -10,7 +10,7 @@ int esPrimo(int num) {
 	return 1;
 }
 
-void inicializar(int **matriz, int fila, int columna) {
+void inicializar(unsigned char **matriz, int fila, int columna) {
 	srand(time(NULL));
 	for (int i = 0; i < fila; i++) {
 		for (int j = 0; j < columna; j++) {
@@ -28,7 +28,7 @@ void mostrarRand(int **matriz, int fila, int columna) {
 	}
 }
 
-void calcularRand(int **matriz, int fila, int columna) {
+void calcularRand(unsigned char **matriz, int fila, int columna) {
 	int contador = 0;
 	for (int i = 0; i < fila; i++) {
 		for (int j = 0; j < columna; j++) {
@@ -43,9 +43,9 @@ int main(int argc, char *argv[]) {
 	int fila = atoi(argv[1]);
 	int columna = atoi(argv[2]);
 
-	int **matriz = (int **)malloc(fila * sizeof(int *));
+	unsigned char **matriz = (unsigned char **)malloc(fila * sizeof(unsigned char *));
 	for (int i = 0; i < fila; i++) {
-		matriz[i] = (int *)malloc(columna * sizeof(int));
+		matriz[i] = (unsigned char *)malloc(columna * sizeof(unsigned char));
 	}
 
 	inicializar(matriz, fila, columna);

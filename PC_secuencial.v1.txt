@@ -1,0 +1,19 @@
+❯ ./secuencial 15000 15000
+Cantidad de números primos: 55689417
+Tiempo: 6.118331 segundos
+❯ ./secuencial 25000 25000
+Cantidad de números primos: 154700937
+Tiempo: 17.001456 segundos
+❯ ./secuencial 30000 30000
+Cantidad de números primos: 222767955
+Tiempo: 48.215304 segundos
+❯ nvim PrimoParalelo.v3.c
+❯ nvim MatrizPrimo.c
+❯ nvim MatrizPrimo.c
+❯ gcc MatrizPrimo.c -o secuencial
+❯ ./secuencial 30000 30000
+Cantidad de números primos: 222752774
+Tiempo: 24.401110 segundos
+❯ ./secuencial 60000 60000
+Cantidad de números primos: 891110675
+Tiempo: 115.580150 segundos

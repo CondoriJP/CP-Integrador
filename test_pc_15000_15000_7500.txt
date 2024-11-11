@@ -1,0 +1,52 @@
+[->] Calculo Secuencial
+[->] Test 1:
+Cantidad de números primos: 55692999
+Tiempo: 6.214071 segundos
+[->] Test 2:
+Cantidad de números primos: 55695647
+Tiempo: 6.209983 segundos
+[->] Test 3:
+Cantidad de números primos: 55678793
+Tiempo: 6.211613 segundos
+[->] Test 4:
+Cantidad de números primos: 55694209
+Tiempo: 6.213754 segundos
+[->] Test 5:
+Cantidad de números primos: 55698182
+Tiempo: 6.214484 segundos
+[->] Calculo Paralelo
+[->] Test 1:
+[+] Master: cantidad de Workers 1
+[+] Master: matriz de 15000 x 15000 a 7500 fila/worker
+[>] Worker 1 (3.220315 seg Comuni-Proces)
+[>] Número total de primos: 55709410
+[*] Worker 1 terminado (2.988016 seg Proces) (4.885032 seg Glob)
+[*] Master terminado (3.030662 seg Proces) (3.220520 seg Glob)
+[->] Test 2:
+[+] Master: cantidad de Workers 1
+[+] Master: matriz de 15000 x 15000 a 7500 fila/worker
+[>] Worker 1 (3.173191 seg Comuni-Proces)
+[>] Número total de primos: 55683891
+[*] Worker 1 terminado (2.997047 seg Proces) (4.889852 seg Glob)
+[*] Master terminado (2.988852 seg Proces) (3.173326 seg Glob)
+[->] Test 3:
+[+] Master: cantidad de Workers 1
+[+] Master: matriz de 15000 x 15000 a 7500 fila/worker
+[>] Worker 1 (3.167448 seg Comuni-Proces)
+[*] Worker 1 terminado (2.995968 seg Proces) (4.860188 seg Glob)
+[>] Número total de primos: 55683282
+[*] Master terminado (2.989607 seg Proces) (3.167579 seg Glob)
+[->] Test 4:
+[+] Master: cantidad de Workers 1
+[+] Master: matriz de 15000 x 15000 a 7500 fila/worker
+[>] Worker 1 (3.178853 seg Comuni-Proces)
+[>] Número total de primos: 55692447
+[*] Worker 1 terminado (2.999632 seg Proces) (4.871306 seg Glob)
+[*] Master terminado (3.006816 seg Proces) (3.179082 seg Glob)
+[->] Test 5:
+[+] Master: cantidad de Workers 1
+[+] Master: matriz de 15000 x 15000 a 7500 fila/worker
+[>] Worker 1 (3.212212 seg Comuni-Proces)
+[>] Número total de primos: 55694289
+[*] Worker 1 terminado (3.034602 seg Proces) (4.868784 seg Glob)
+[*] Master terminado (3.033912 seg Proces) (3.212281 seg Glob)
