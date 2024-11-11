@@ -1,0 +1,52 @@
+[->] Calculo Secuencial
+[->] Test 1:
+Cantidad de números primos: 99012583
+Tiempo: 11.072072 segundos
+[->] Test 2:
+Cantidad de números primos: 99009133
+Tiempo: 11.031012 segundos
+[->] Test 3:
+Cantidad de números primos: 99001966
+Tiempo: 11.043511 segundos
+[->] Test 4:
+Cantidad de números primos: 98996610
+Tiempo: 11.048216 segundos
+[->] Test 5:
+Cantidad de números primos: 99024635
+Tiempo: 11.047775 segundos
+[->] Calculo Paralelo
+[->] Test 1:
+[+] Master: cantidad de Workers 1
+[+] Master: matriz de 20000 x 20000 a 10000 fila/worker
+[>] Worker 1 (5.429925 seg Comuni-Proces)
+[>] Número total de primos: 99010361
+[*] Worker 1 terminado (5.354957 seg Proces)
+[*] Master terminado (5.259639 seg Proces) (5.429980 seg Glob)
+[->] Test 2:
+[+] Master: cantidad de Workers 1
+[+] Master: matriz de 20000 x 20000 a 10000 fila/worker
+[>] Worker 1 (5.354243 seg Comuni-Proces)
+[>] Número total de primos: 99017069
+[*] Worker 1 terminado (5.279305 seg Proces)
+[*] Master terminado (5.251139 seg Proces) (5.354385 seg Glob)
+[->] Test 3:
+[+] Master: cantidad de Workers 1
+[+] Master: matriz de 20000 x 20000 a 10000 fila/worker
+[>] Worker 1 (5.342514 seg Comuni-Proces)
+[>] Número total de primos: 99027920
+[*] Worker 1 terminado (5.267515 seg Proces)
+[*] Master terminado (5.249631 seg Proces) (5.342648 seg Glob)
+[->] Test 4:
+[+] Master: cantidad de Workers 1
+[+] Master: matriz de 20000 x 20000 a 10000 fila/worker
+[>] Worker 1 (5.416534 seg Comuni-Proces)
+[>] Número total de primos: 99020282
+[*] Worker 1 terminado (5.310793 seg Proces)
+[*] Master terminado (5.341407 seg Proces) (5.416586 seg Glob)
+[->] Test 5:
+[+] Master: cantidad de Workers 1
+[+] Master: matriz de 20000 x 20000 a 10000 fila/worker
+[>] Worker 1 (5.378313 seg Comuni-Proces)
+[>] Número total de primos: 98986689
+[*] Worker 1 terminado (5.301276 seg Proces)
+[*] Master terminado (5.285312 seg Proces) (5.378525 seg Glob)

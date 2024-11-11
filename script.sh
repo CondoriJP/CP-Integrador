@@ -7,24 +7,25 @@
 # $5: Numero de filas/worker
 
 # Compilacion
-gcc MatrizPrimo.c -o secuencial
-mpicc PrimoParalelo.v3.c -o Paralelo
+gcc MatrizSecuencial.c -o Secuencial
+mpicc MatrizParalelo.c -o Paralelo
 echo "[->] Compilacion Exitosa"
+mkdir test
 
 # Version secuencial
 echo "[->] Calculo Secuencial"
-echo "[->] Calculo Secuencial" >> $2.txt
+echo "[->] Calculo Secuencial" >> test/$2.txt
 for ((i = 1; i < ($1+1); i++)); do
 	echo "[->] Test $i:"
-	echo "[->] Test $i:" >> $2.txt
-	./secuencial $3 $4 >> $2.txt
+	echo "[->] Test $i:" >> test/$2.txt
+	./Secuencial $3 $4 >> test/$2.txt
 done
 
 # Version paralela
 echo "[->] Calculo Paralelo"
-echo "[->] Calculo Paralelo" >> $2.txt
+echo "[->] Calculo Paralelo" >> test/$2.txt
 for ((i = 1; i < ($1+1); i++)); do
 	echo "[->] Test $i:"
-	echo "[->] Test $i:" >> $2.txt
-	mpirun -np 2 --hostfile host ./Paralelo $3 $4 $5 >> $2.txt
+	echo "[->] Test $i:" >> test/$2.txt
+	mpirun -np 2 --hostfile host ./Paralelo $3 $4 $5 >> test/$2.txt
 done
