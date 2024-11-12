@@ -10,16 +10,16 @@ int esPrimo(int num) {
 	return 1;
 }
 
-void inicializar(unsigned char **matriz, int fila, int columna) {
+void inicializar(unsigned short int **matriz, int fila, int columna) {
 	srand(time(NULL));
 	for (int i = 0; i < fila; i++) {
 		for (int j = 0; j < columna; j++) {
-			matriz[i][j] = rand() % 101;
+			matriz[i][j] = rand() % 65536;
 		}
 	}
 }
 
-void mostrarRand(int **matriz, int fila, int columna) {
+void mostrarRand(unsigned short int **matriz, int fila, int columna) {
 	for (int i = 0; i < fila; i++) {
 		for (int j = 0; j < columna; j++) {
 			printf("%d ", matriz[i][j]);
@@ -28,7 +28,7 @@ void mostrarRand(int **matriz, int fila, int columna) {
 	}
 }
 
-void calcularRand(unsigned char **matriz, int fila, int columna) {
+void calcularRand(unsigned short int **matriz, int fila, int columna) {
 	int contador = 0;
 	for (int i = 0; i < fila; i++) {
 		for (int j = 0; j < columna; j++) {
@@ -43,9 +43,9 @@ int main(int argc, char *argv[]) {
 	int fila = atoi(argv[1]);
 	int columna = atoi(argv[2]);
 
-	unsigned char **matriz = (unsigned char **)malloc(fila * sizeof(unsigned char *));
+	unsigned short int **matriz = (unsigned short int **)malloc(fila * sizeof(unsigned short int *));
 	for (int i = 0; i < fila; i++) {
-		matriz[i] = (unsigned char *)malloc(columna * sizeof(unsigned char));
+		matriz[i] = (unsigned short int *)malloc(columna * sizeof(unsigned short int));
 	}
 
 	inicializar(matriz, fila, columna);

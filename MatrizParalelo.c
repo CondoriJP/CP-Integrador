@@ -10,7 +10,7 @@
 #define ULTIMA 4
 
 // Función para determinar si un número es primo
-int esPrimo(unsigned char num) {
+int esPrimo(unsigned short int num) {
 	if (num <= 1) return 0;  // Los números menores o iguales a 1 no son primos
 	for (int i = 2; i * i <= num; i++) {  // Solo es necesario iterar hasta la raíz cuadrada de num
 		if (num % i == 0) return 0;  // Si es divisible, no es primo
@@ -19,15 +19,15 @@ int esPrimo(unsigned char num) {
 }
 
 // Función para inicializar la matriz con valores aleatorios entre 0 y 100
-void inicializar(unsigned char *matriz, int filas, int columnas) {
+void inicializar(unsigned short int *matriz, int filas, int columnas) {
 	srand(time(NULL));  // Inicializa la semilla para la generación de números aleatorios
 	for (int i = 0; i < (filas * columnas); i++) {
-		matriz[i] = rand() % 101;  // Asigna un valor aleatorio entre 0 y 100 a cada elemento
+		matriz[i] = rand() % 65546;  // Asigna un valor aleatorio entre 0 y 100 a cada elemento
 	}
 }
 
 // Función para mostrar la matriz en la consola
-void mostrar_matriz(unsigned char *matriz, int filas, int columnas) {
+void mostrar_matriz(unsigned short int *matriz, int filas, int columnas) {
 	for (int i = 0; i < filas; i++) {
 		for (int j = 0; j < columnas; j++) {
 			printf("%d ", matriz[i * columnas + j]);  // Imprime cada elemento de la matriz
@@ -37,7 +37,7 @@ void mostrar_matriz(unsigned char *matriz, int filas, int columnas) {
 }
 
 // Función para mostrar una fila de la matriz
-void mostrar_fila(unsigned char *vector, int n) {
+void mostrar_fila(unsigned short int *vector, int n) {
 	for (int i = 0; i < n; i++) {
 		printf("%d ", vector[i]);  // Imprime cada número de la fila
 	}
@@ -76,9 +76,8 @@ int main(int argc, char **argv) {
 		int flag = 0;
 		int resto = filas % cantFilas;  // Resto de filas que no encajan en bloques completos
 		MPI_Status status;  // Variable para almacenar el estado de los mensajes MPI
-		unsigned char *matriz = (unsigned char *)malloc(filas * columnas * sizeof(unsigned char));
-		unsigned char *fila = (unsigned char *)malloc(columnas * cantFilas * sizeof(unsigned char));
-
+		unsigned short int *matriz = (unsigned short int *)malloc(filas * columnas * sizeof(unsigned short int));
+		unsigned short int *fila;
 		// Inicializa los tiempos para los Workers
 		for (int i = 0; i < size; i++) {
 			inicioW[i] = 0;
@@ -97,13 +96,13 @@ int main(int argc, char **argv) {
 			if (worker < size) {
 				if (resto != 0 && i == (filas - resto) * columnas) {
 					// Si hay filas restantes (resto), enviarlas al último Worker
-					MPI_Send(&matriz[i], columnas * resto, MPI_UNSIGNED_CHAR, worker, ULTIMA, MPI_COMM_WORLD);
+					MPI_Send(&matriz[i], columnas * resto, MPI_UNSIGNED_SHORT, worker, ULTIMA, MPI_COMM_WORLD);
 					MPI_Send(&resto, 1, MPI_INT, worker, ULTIMA, MPI_COMM_WORLD);
 					break;
 				}
 				// Enviar bloques completos de filas a los Workers
 				inicioW[worker] = MPI_Wtime();  // Tiempo de inicio para el Worker
-				MPI_Send(&matriz[i], columnas * cantFilas, MPI_UNSIGNED_CHAR, worker, TAREA, MPI_COMM_WORLD);
+				MPI_Send(&matriz[i], columnas * cantFilas, MPI_UNSIGNED_SHORT, worker, TAREA, MPI_COMM_WORLD);
 				worker++;
 			} else {
 				// El Master sigue trabajando mientras espera resultados de los Workers
@@ -127,12 +126,12 @@ int main(int argc, char **argv) {
 
 					// Verificar si se está procesando la última fila (con resto)
 					if (resto != 0 && i == (filas - resto) * columnas) {
-						MPI_Send(&matriz[i], columnas * resto, MPI_UNSIGNED_CHAR, status.MPI_SOURCE, ULTIMA, MPI_COMM_WORLD);
+						MPI_Send(&matriz[i], columnas * resto, MPI_UNSIGNED_SHORT, status.MPI_SOURCE, ULTIMA, MPI_COMM_WORLD);
 						MPI_Send(&resto, 1, MPI_INT, status.MPI_SOURCE, ULTIMA, MPI_COMM_WORLD);
 						break;
 					}
 					// Reenviar una fila al Worker que terminó su tarea
-					MPI_Send(&matriz[i], columnas * cantFilas, MPI_UNSIGNED_CHAR, status.MPI_SOURCE, TAREA, MPI_COMM_WORLD);
+					MPI_Send(&matriz[i], columnas * cantFilas, MPI_UNSIGNED_SHORT, status.MPI_SOURCE, TAREA, MPI_COMM_WORLD);
 				}
 			}
 		}
@@ -160,19 +159,17 @@ int main(int argc, char **argv) {
 		fin = MPI_Wtime();
 		printf("[>] Número total de primos: %d\n", primos_totales);
 		free(matriz);  // Liberar la memoria de la matriz
-		free(fila);  // Liberar la memoria de la fila
 		printf("[*] Master terminado (%f seg Proces) (%f seg Glob)\n", acumulado, fin - inicio);
-
 	} else {
 		// Código para los Workers (rank > 0)
 		double inicio, fin, acumulado = 0;
 		MPI_Status status;
-		unsigned char *fila = (unsigned char *)malloc(columnas * cantFilas * sizeof(unsigned char));
+		unsigned short int *fila = (unsigned short int *)malloc(columnas * cantFilas * sizeof(unsigned short int));
 		int primos_locales;
 
 		// Bucle que mantiene a los Workers procesando hasta recibir FIN
 		while (1) {
-			MPI_Recv(fila, columnas * cantFilas, MPI_UNSIGNED_CHAR, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+			MPI_Recv(fila, columnas * cantFilas, MPI_UNSIGNED_SHORT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
 			if (status.MPI_TAG == TAREA) {
 				// Cuando recibe una tarea, cuenta los primos en la fila
 				inicio = MPI_Wtime();
